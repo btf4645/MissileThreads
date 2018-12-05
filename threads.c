@@ -92,7 +92,6 @@ int main(int argc, char * argv[]){
 	  maximum = maximum + 1;
 	  city_layout = realloc(city_layout, sizeof(int*) * maximum);	  
 	}
-	//city_layout = (int *)realloc(city_layout, temp_size * sizeof(int*));
 	temp_size = temp_size + 1;
 	sscanf(token, "%d", &another_temp);
 	city_layout[temp_var] = another_temp;
@@ -102,14 +101,14 @@ int main(int argc, char * argv[]){
     }
   }
    
-
+  /*
   printf("%s\n", defense_force);
   printf("%s\n", attack_force);
   printf("%d\n", maximum_missiles);
   for(size_t i = 0; i < sizeof(city_layout); i++){
     printf("%d\n", city_layout[i]);
   }
-
+  */
   
   
   initscr();
@@ -123,7 +122,7 @@ int main(int argc, char * argv[]){
   
   WINDOW * win = newwin(LINES, COLUMNS, 0, 0);
   
-  //  pthread_t t;
+  // pthread_t t;
   // const char* m = "thread";
   pthread_mutex_init(&thread, NULL);
 
@@ -132,32 +131,71 @@ int main(int argc, char * argv[]){
   int ch = getch();
   int counter;
   int maximum_y;
-
+  int cv;
   //defender goes one row above the highest building
   //if the rest is at 2 from the width, then keep it at ground level
+
+  if(temp_var < curx){
+    int a  = temp_var - 1;
+    while(a < curx){
+      if(temp_var == maximum){
+	maximum = maximum + 1;
+	city_layout = realloc(city_layout, sizeof(int) * maximum);
+      }
+      city_layout[a] = 2;
+      temp_var++;
+      a++;
+    }
+  }
+
+  cv = 2;
   
-  //SET UP CITY LANSCAPE HERE and curser
   for(int i = 0; i <= sizeof(city_layout); i++){
-    if(city_layout[i] == 2){
-      mvaddch(curx - 2, cury, "_");
+    if(i < LINES){
+      if(city_layout[i] == cv){
+        mvaddch(curx - 2, cury, '_');
+      }
+      else if(city_layout[i] > cv){
+	int additioning = city_layout[i] - cv;
+	int c = 0;
+	while(c < additioning){
+	  mvaddch(curx - cv - c, i, '|');
+	  c = c + 1;
+	}
+	maximum_y = i;
+	int go_two = cv - 2;
+	int p = 0;
+	while(p < go_two){
+	  mvaddch(curx - cv + p + 1, i, '|');
+	  p = p + 1;
+	}
+      }
+      else if(city_layout[i] < cury){
+	if(city_layout[i] != 2){
+	  int go_two = cv - 2;
+	  int p = 0;
+	  while(p < go_two){
+	    mvaddch(curx - cv + p + 1, i , '|');
+	    p = p + 1;
+	  }
+	}
+	else{
+	  int s = cv - city_layout[i];
+	  int p = 0;
+	  while(p < s){
+	    mvaddch(curx - cv + p + 1, i , '|');
+            p =	p + 1;
+	  }
+	}
+      }
+      cv = city_layout[i];
     }
-    if(city_layout[i] > cury){
-      mvaddch(curx, cury, "|");
-      current_y = i;
-    }
-    else{
-      current_y = i + 1;
-    }
-    while(city_layout[i + 1] != 2){
-      counter = counter + i;
-    }
-    draw(2, current_y, '|'); 
   }
 
   refresh();
 
   /*
-  while(1){
+  while(getch() != 'q'){
     mvaddch((LINES / 2), (COLUMNS / 2), '####');
     if(ch == '?'){
       return EXIT_FAILURE;
@@ -209,10 +247,12 @@ int main(int argc, char * argv[]){
 
 
   free(city_layout);
+  */
+
+  getchar();
+	      
 
   //for when the program is over
-  endwin();
-  */  
+  endwin();  
 
 }
-
