@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <curses.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -10,22 +11,13 @@
 
 int COLUMNS;
 int LINES;
+int c;
+int l;
 pthread_mutex_t thread;
-char Char;
+//char Char;
 
-#define delay 1000
 
 /*
-void game_loop(int COLUMNS, int LINES, int ch){
-  if(ch == 'q'){
-    return EXIT_FAILURE;
-  }
-  mvaddch(COLUMNS, LINES, ch);
-
-
-}
-*/
-
 void draw(int x, int y, char charer){
   pthread_mutex_lock(&thread);
   mvaddch(x, y, charer);
@@ -38,16 +30,18 @@ void erasing(int x, int y){
   mvaddch(x, y, ' ');
   pthread_mutex_unlock(&thread);
 }
+*/
 
 int main(int argc, char * argv[]){
   FILE *fps;
-  int maximum = 0;
+  int maximum = 1;
   char filename[255];
   char defense_force[81];
   char attack_force[81];
   signed int maximum_missiles;
-  int * city_layout = malloc(sizeof(int) * maximum);
-  size_t sizes = 0;
+  //int * city_layout = malloc(sizeof(int) * maximum);
+  int city_layout[300];
+  int sizes = 300;
   char * buffer = NULL;
   int counts = 0;
   int temp_var = 0;
@@ -85,30 +79,19 @@ int main(int argc, char * argv[]){
       counts = counts + 1;
     }
     else if (counts >= 3){
-      int temp_size = 1;
-      token = strtok(buffer, " ");
+      token = strtok(buffer, " \t\n");
       while(token != NULL){
-	if(temp_var == maximum){
-	  maximum = maximum + 1;
-	  city_layout = realloc(city_layout, sizeof(int*) * maximum);	  
-	}
-	temp_size = temp_size + 1;
+	//if(temp_var == maximum){
+	//maximum = maximum + 1;
+	  //city_layout = realloc(city_layout, sizeof(int) * maximum);	  
+	  //}
 	sscanf(token, "%d", &another_temp);
 	city_layout[temp_var] = another_temp;
 	temp_var++;
-	token = strtok(NULL, " ");
+	token = strtok(NULL, " \t\n");
       }
     }
   }
-   
-  /*
-  printf("%s\n", defense_force);
-  printf("%s\n", attack_force);
-  printf("%d\n", maximum_missiles);
-  for(size_t i = 0; i < sizeof(city_layout); i++){
-    printf("%d\n", city_layout[i]);
-  }
-  */
   
   
   initscr();
@@ -117,27 +100,31 @@ int main(int argc, char * argv[]){
 
   keypad(stdscr, TRUE);
   
-  LINES = getmaxx(stdscr);
-  COLUMNS = getmaxy(stdscr);
-  
+  getmaxyx(stdscr, LINES, COLUMNS);
+  getmaxyx(stdscr, l, c);
   WINDOW * win = newwin(LINES, COLUMNS, 0, 0);
   
-  // pthread_t t;
-  // const char* m = "thread";
+  pthread_t t;
+  const char* m = "thread";
   pthread_mutex_init(&thread, NULL);
 
+  /*
+  for(int i = 0; i <= sizeof(city_layout); i++){
+    printf("%d", city_layout[i]);
+  }
+  */
+  
   int curx = LINES;
   int cury = COLUMNS;
   int ch = getch();
   int counter;
   int maximum_y;
   int cv;
-  //defender goes one row above the highest building
-  //if the rest is at 2 from the width, then keep it at ground level
-
-  if(temp_var < curx){
+  
+  /*
+  if(temp_var < LINES){
     int a  = temp_var - 1;
-    while(a < curx){
+    while(a < LINES){
       if(temp_var == maximum){
 	maximum = maximum + 1;
 	city_layout = realloc(city_layout, sizeof(int) * maximum);
@@ -147,35 +134,60 @@ int main(int argc, char * argv[]){
       a++;
     }
   }
+  */
 
   cv = 2;
+
+  // int sizing = sizeof(city_layout);
   
-  for(int i = 0; i <= sizeof(city_layout); i++){
+  for(int i = 0; i < temp_var; i++){
     if(i < LINES){
+      if(city_layout[i] < 0){
+	//while(i < LINES){
+	  mvwaddch(win, LINES - cv, i, '_');
+	  //}
+      }
+
+      /*
+      if (city_layout[i] == '/0' && i < LINES){
+	int add = city_layout[i] - cv;
+	int z = 0;
+	while(i < LINES){
+	  if (cv != 2){
+	    while (z < add){
+	      mvwaddch(win, LINES - cv - z, i, '|');
+	      z = z + 1;
+	    }
+	  }
+	  else{
+	    mvwaddch(win, LINES - cv, i, '_');
+	  }
+	}
+      }
+      */
       if(city_layout[i] == cv){
-        mvaddch(curx - 2, cury, '_');
+	mvwaddch(win, LINES - cv, i, '_');
       }
       else if(city_layout[i] > cv){
 	int additioning = city_layout[i] - cv;
 	int c = 0;
 	while(c < additioning){
-	  mvaddch(curx - cv - c, i, '|');
+	  mvwaddch(win, LINES - cv - c, i, '|');
 	  c = c + 1;
 	}
-	maximum_y = i;
 	int go_two = cv - 2;
 	int p = 0;
 	while(p < go_two){
-	  mvaddch(curx - cv + p + 1, i, '|');
+	  mvwaddch(win, LINES - cv + p + 1, i, '|');
 	  p = p + 1;
 	}
       }
-      else if(city_layout[i] < cury){
+      else if(city_layout[i] < COLUMNS){
 	if(city_layout[i] != 2){
 	  int go_two = cv - 2;
 	  int p = 0;
 	  while(p < go_two){
-	    mvaddch(curx - cv + p + 1, i , '|');
+	    mvwaddch(win, LINES - cv + p + 1, i , '|');
 	    p = p + 1;
 	  }
 	}
@@ -183,38 +195,58 @@ int main(int argc, char * argv[]){
 	  int s = cv - city_layout[i];
 	  int p = 0;
 	  while(p < s){
-	    mvaddch(curx - cv + p + 1, i , '|');
-            p =	p + 1;
+	    mvwaddch(win, LINES - cv + p + 1, i , '|');
+	    p =	p + 1;
 	  }
 	}
       }
       cv = city_layout[i];
+      wrefresh(win);
+    }
+    //refresh();
+  }
+
+  //refresh();
+  fclose(fps);
+  for(int i = 0; i < temp_var; i++){
+    if(city_layout[i] > maximum_y){
+      maximum_y = city_layout[i];
     }
   }
 
-  refresh();
-
-  /*
-  while(getch() != 'q'){
-    mvaddch((LINES / 2), (COLUMNS / 2), '####');
+  
+  int row = (l - maximum_y);
+  int column = (c / 2);
+  
+  while(ch != 'q'){
+    mvaddstr(row, column, "####");
+    ch = getch();    
     if(ch == '?'){
       return EXIT_FAILURE;
     }
-    
-    ch = getch();
-    switch(ch){
-    case KEY_RIGHT:
-      erasing(curx, cury);
-      curx = curx + 1;
-      //mvaddch(cury, curx, '####');
-      draw(curx, cury, '####');
-    case KEY_LEFT:
-      erasing(curx, cury);
-      curx = curx - 1;
-      //mvaddch(cury, curx, '####');
-      draw(curx, cury, '####');
+    wrefresh(win);
+      
+    if(ch == KEY_RIGHT){
+      mvaddstr(row, column + 1, "#####");
+      mvaddstr(row, column, " ");
+      column++;
+      refresh();
     }
+
+      
+    if(ch == KEY_LEFT){
+      mvaddstr(row, column - 1, "#####");
+      mvaddstr(row, column + 4, " ");
+      column--;
+      refresh();
+    }
+
+    ch = getch();
     
+    wrefresh(win);
+  }
+
+    /*
     for(int i = 0; i < maximum_missiles; i++){
     //if i at cury is equal 
     if(i < COLUMNS && i != '-'){ 
@@ -248,8 +280,6 @@ int main(int argc, char * argv[]){
 
   free(city_layout);
   */
-
-  getchar();
 	      
 
   //for when the program is over
