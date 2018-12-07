@@ -8,27 +8,206 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+//#include "help.h"
+
+
 
 int COLUMNS;
 int LINES;
 int c;
 int l;
 pthread_mutex_t thread;
-//char Char;
+//pthread_mutex_t threadinitial;
+int ch;
+signed int maximum_missiles;
+int a;
+int b;
+
+typedef struct defender{
+  int row;
+  int column;
+}D;
 
 
-/*
-void draw(int x, int y, char charer){
-  pthread_mutex_lock(&thread);
-  mvaddch(x, y, charer);
-  refresh();
-  pthread_mutex_unlock(&thread);
+typedef struct missiles{
+  int currentx;
+  int currenty;
+  char *graphic;
+} Bombs;
+
+D * make_defender(int row, int column){
+  D *d = malloc(sizeof(struct defender));
+  d->row = row;
+  d->column = column;
 }
 
-void erasing(int x, int y){
+
+void *defenders(void *defender){
+  //struct D *d = arguements;
+  //or it is struct defender 
+  
+  D *d = (D*)defender;
+  //Lock
+  //move to the middle of the screen
+  //print out the defender
+  //unlock 
+
+  mvaddstr(d->row, d->column, "####");
+
+  while(ch != 'q'){
+    //mvaddstr(d->row, d->column, "####");
+                                                                                     
+    if(ch == '?'){
+      pthread_exit(0);
+      break;
+    }
+    refresh();
+
+    if(ch == KEY_RIGHT){
+      pthread_mutex_lock(&thread);
+      mvaddstr(d->row, d->column + 1, "#####");
+      mvaddstr(d->row, d->column, " ");
+      d->column++;
+      refresh();
+      pthread_mutex_unlock(&thread);
+    }
+
+    if(ch == KEY_LEFT){
+      pthread_mutex_lock(&thread);
+      mvaddstr(d->row, d->column - 1, "#####");
+      mvaddstr(d->row, d->column + 4, " ");
+      d->column--;
+      refresh();
+      pthread_mutex_unlock(&thread);
+    }
+    ch = getch();
+    refresh();
+  }
+  return 0;
+}
+
+
+Bombs * make_missile(int currentx, int currenty){
+  Bombs *m = malloc(sizeof(struct missiles));
+  m->currentx = currentx;
+  //int randomy = rand();
+  //m->currenty = randomy % (b + 1);
+  m->currenty = currenty;
+  m->graphic = '|';
+}
+
+void destroy_missile(Bombs *missile){
+  free(missile);
+}
+
+void *run(void *missile){
+  Bombs *m = (Bombs*)missile;
+  int rest = rand() % 1000;
+  int randomy = rand() % m->currenty;
+  usleep(rest);
   pthread_mutex_lock(&thread);
-  mvaddch(x, y, ' ');
+  mvaddch(2, randomy, '|');
+  refresh();
   pthread_mutex_unlock(&thread);
+  while(m->graphic != '?'){
+    /*
+    int rest = rand() % 1000;
+    usleep(rest);
+    pthread_mutex_lock(&thread);
+    mvaddch(m->currentx, m->currenty, '|');
+    refresh();
+    pthread_mutex_unlock(&thread);
+    m->currentx++;
+    */
+    
+    if(m->currentx <= 2){
+      pthread_mutex_lock(&thread);
+      mvaddch(m->currentx + 1, randomy, '?');
+      mvaddch(m->currentx, randomy, ' ');
+      refresh();
+      pthread_mutex_unlock(&thread);
+      pthread_exit(0);
+      break;
+    }
+    else if(mvinch(m->currentx + 1, randomy) == '_'){
+      pthread_mutex_lock(&thread);
+      mvaddch(m->currentx, randomy, ' ');
+      mvaddch(m->currentx + 1, randomy, '?');
+      mvaddch(m->currentx + 2, randomy, '*');
+      refresh();
+      pthread_mutex_unlock(&thread);
+      pthread_exit(0);
+      break;
+    }
+    else if(mvinch(m->currentx + 1, randomy) == '#'){
+      pthread_mutex_lock(&thread);
+      mvaddch(m->currentx, randomy, ' ');
+      mvaddch(m->currentx, randomy, '?');
+      mvaddch(m->currentx + 1, randomy, '*');
+      refresh();
+      pthread_mutex_unlock(&thread);
+      pthread_exit(0);
+      break;
+    }
+    else{
+      usleep(rest);
+      pthread_mutex_lock(&thread);
+      mvaddch(m->currentx, randomy, ' ');
+      mvaddch(m->currentx + 1, randomy, '|');
+      refresh();
+      pthread_mutex_unlock(&thread);
+      m->currentx++;
+    }
+    m->currentx++;
+  }
+  destroy_missile(m);
+  return (void*) "Over";
+}
+    
+  
+/*
+void *missile(void *arguements){
+  struct missiles *m = arguements;
+  //int randomx = rand() % m->currentx;
+  int randomy = rand() % currenty;
+  while(ch != 'q'){
+    for(int i = 0; i < maximum_missiles; i++){
+      mvaddch(randomx, m->currenty, '|');
+      if(randomx != '-'){
+	sleep(1000);
+	pthread_mutex_lock(&thread);
+	mvaddch(randomx + 1, m->currenty, '|');
+	mvaddch(randomx, m->currenty, ' ');
+	randomx++;
+	pthread_mutex_unlock(&thread);
+	
+	refresh();
+      }
+      else if(i >= m->currenty || i == '-'){
+	pthread_mutex_lock(&thread);
+	mvaddch(randomx, m->currenty, ' ');
+	mvaddch(randomx + 1, m->currenty, '?');
+	mvaddch(randomx + 1, m->currenty, '*');
+	randomx++;
+	pthread_mutex_unlock(&thread);
+	
+	refresh();
+      }
+      else{
+	pthread_mutex_lock(&thread);
+	mvaddch(randomx + 1, m->currenty, '?');
+	mvaddch(randomx, m->currenty, ' ');
+	randomx++;
+	pthread_mutex_unlock(&thread);
+	
+	refresh();
+      }
+      //refresh();
+    }
+    ch = getch();
+    refresh();
+  }
+  return 0;
 }
 */
 
@@ -38,9 +217,8 @@ int main(int argc, char * argv[]){
   char filename[255];
   char defense_force[81];
   char attack_force[81];
-  signed int maximum_missiles;
   //int * city_layout = malloc(sizeof(int) * maximum);
-  int city_layout[300];
+  int city_layout[1000];
   int sizes = 300;
   char * buffer = NULL;
   int counts = 0;
@@ -83,8 +261,8 @@ int main(int argc, char * argv[]){
       while(token != NULL){
 	//if(temp_var == maximum){
 	//maximum = maximum + 1;
-	  //city_layout = realloc(city_layout, sizeof(int) * maximum);	  
-	  //}
+	//city_layout = realloc(city_layout, sizeof(int) * maximum);	  
+	//}
 	sscanf(token, "%d", &another_temp);
 	city_layout[temp_var] = another_temp;
 	temp_var++;
@@ -102,12 +280,13 @@ int main(int argc, char * argv[]){
   
   getmaxyx(stdscr, LINES, COLUMNS);
   getmaxyx(stdscr, l, c);
+  getmaxyx(stdscr, a, b);
   WINDOW * win = newwin(LINES, COLUMNS, 0, 0);
   
-  pthread_t t;
-  const char* m = "thread";
+  // pthread_t t;
+  //const char* m = "thread";
   pthread_mutex_init(&thread, NULL);
-
+  //pthread_mutex_init(&threadinitial, NULL);
   /*
   for(int i = 0; i <= sizeof(city_layout); i++){
     printf("%d", city_layout[i]);
@@ -116,12 +295,13 @@ int main(int argc, char * argv[]){
   
   int curx = LINES;
   int cury = COLUMNS;
-  int ch = getch();
+  ch = getch();
   int counter;
   int maximum_y;
   int cv;
-  
+
   /*
+  
   if(temp_var < LINES){
     int a  = temp_var - 1;
     while(a < LINES){
@@ -134,37 +314,18 @@ int main(int argc, char * argv[]){
       a++;
     }
   }
+  
   */
-
   cv = 2;
 
   // int sizing = sizeof(city_layout);
   
   for(int i = 0; i < temp_var; i++){
     if(i < LINES){
-      if(city_layout[i] < 0){
-	//while(i < LINES){
+      while(city_layout[i] < 0 && i < LINES){
 	  mvwaddch(win, LINES - cv, i, '_');
-	  //}
       }
 
-      /*
-      if (city_layout[i] == '/0' && i < LINES){
-	int add = city_layout[i] - cv;
-	int z = 0;
-	while(i < LINES){
-	  if (cv != 2){
-	    while (z < add){
-	      mvwaddch(win, LINES - cv - z, i, '|');
-	      z = z + 1;
-	    }
-	  }
-	  else{
-	    mvwaddch(win, LINES - cv, i, '_');
-	  }
-	}
-      }
-      */
       if(city_layout[i] == cv){
 	mvwaddch(win, LINES - cv, i, '_');
       }
@@ -214,62 +375,122 @@ int main(int argc, char * argv[]){
     }
   }
 
+  maximum_y++;
   
-  int row = (l - maximum_y);
+  //int row = (l - maximum_y);
+  
+  int value = maximum_missiles;
+  int b1;
+  int b2;
+  pthread_t y1;
+  pthread_t y2[value];
+
+  int row = ( l - maximum_y);
   int column = (c / 2);
   
-  while(ch != 'q'){
+  D *d = make_defender(row, column);
+  b1 = pthread_create(&y1, NULL, defenders, (void *)d);
+
+  
+  for(int i = 0; i < maximum_missiles; i++){
+    Bombs *m = make_missile(a, b);
+    b2 = pthread_create(&y2[i], NULL, run, (void*)m);
+    if(b2){
+      fprintf("%s", "is created");
+      return EXIT_FAILURE;
+    }
+  }
+  //int b1;
+  //int b2;
+  //pthread_t y1;
+  //pthread_t y2;
+
+  //b1 = pthread_create(&y1, NULL, &defenders, (void *)&d);
+  //b2 = pthread_create(&y2, NULL, &run, (void*)&mam);
+  
+  
+  //row = ( l - maximum_y);
+  //column = (c / 2);
+  //mam.currentx = a;
+  //mam.currenty = b;
+
+  void *r;
+  void *f;
+  
+  ch = getch();
+  if(ch != 'q'){
+    pthread_join(y1, r);
+    for(int i = 0; i < maximum_missiles; i++){
+      pthread_join(y2[i], f);
+    }
+  
+    /*
     mvaddstr(row, column, "####");
-    ch = getch();    
+    //ch = getch();    
     if(ch == '?'){
       return EXIT_FAILURE;
     }
-    wrefresh(win);
+    refresh();
       
     if(ch == KEY_RIGHT){
+      pthread_mutex_lock(&threadinitial);
       mvaddstr(row, column + 1, "#####");
       mvaddstr(row, column, " ");
       column++;
+      pthread_mutex_unlock(&threadinitial);
       refresh();
     }
 
       
     if(ch == KEY_LEFT){
+      pthread_mutex_lock(&threadinitial);
       mvaddstr(row, column - 1, "#####");
       mvaddstr(row, column + 4, " ");
       column--;
+      pthread_mutex_unlock(&threadinitial);
       refresh();
     }
 
-    ch = getch();
-    
-    wrefresh(win);
-  }
+    //ch = getch();    
+    //wrefresh(win);
 
-    /*
+    
     for(int i = 0; i < maximum_missiles; i++){
-    //if i at cury is equal 
-    if(i < COLUMNS && i != '-'){ 
+      if(i < COLUMNS && i != '-'){ 
 	usleep(1000);
-	erasing(curx, cury);
-	cury = cury - 1;
-	mvaddch(cury, curx, '|');
+	pthread_mutex_lock(&thread);
+	mvaddch(currentx + 1, currenty, '|');
+	mvaddch(currentx, currenty, ' ');
+	currentx++;
+	pthread_mutex_unlock(&thread); 
+
 	refresh();
       }
       else if(i >= COLUMNS || i == '-'){
-	erasing(curx, cury);
-	mvaddch(cury, curx, '?');
-	mvaddch(cury - 1, curx, '*');
-	refresh();
+	pthread_mutex_lock(&thread);
+	mvaddch(currentx, currenty, ' ');
+        mvaddch(currentx + 1, currenty, '?');
+	mvaddch(currentx + 1, currenty, '*');
+        currentx++;
+        pthread_mutex_unlock(&thread);
+	
+        refresh();
       }
       else{
-	erasing(curx, cury);
-	mvaddch(cury, curx, '?');
+	pthread_mutex_lock(&thread);
+        mvaddch(currentx + 1, currenty, '?');
+	mvaddch(currentx, currenty, ' ');
+        currentx++;
+        pthread_mutex_unlock(&thread);
+	
 	refresh();
       }
     }
-
-  }
+    */
+    
+    ch = getch();
+    wrefresh(win);
+    }
 
 
   char errors;
@@ -278,8 +499,8 @@ int main(int argc, char * argv[]){
   mvwaddch(win, 0, 1, errors);
 
 
-  free(city_layout);
-  */
+  //free(city_layout);
+  
 	      
 
   //for when the program is over
