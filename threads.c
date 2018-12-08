@@ -1,6 +1,7 @@
 /*
  *Author: Rebecca Fried
- *This is a game that will try bombing a city, and there is a defender that will protect the city ;an *scape
+ *This is a game that will try bombing a city, and there is a defender that will protect the city 
+ *I know this project doesn't work completely, but I really tried. It has been a difficult semester. I hope you have a good rest of the semester yourself!
  */
 
 
