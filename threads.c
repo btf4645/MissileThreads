@@ -133,7 +133,7 @@ void *infinity(void *missile){
   
   int rest = rand() % 1000;
 
-  usleep(rest * 1000);
+  usleep(rest * 100);
   pthread_mutex_lock(&thread);
   mvaddstr(m->currentx, m->currenty, "|");
   refresh();
@@ -182,7 +182,7 @@ void *infinity(void *missile){
     }
     //if it is just an empty space, keep going
     else{
-      usleep(rest * 1000);
+      usleep(rest * 100);
       pthread_mutex_lock(&thread);
       mvaddstr(m->currentx, m->currenty, " ");
       mvaddstr(m->currentx + 1, m->currenty, "|");
@@ -191,7 +191,7 @@ void *infinity(void *missile){
       pthread_mutex_unlock(&thread);
       m->currentx++;
     }
-    usleep(rest * 1000);          
+    usleep(rest * 100);          
   }
   destroy_missile(m);
   return (void*) "The game is over!";
@@ -208,7 +208,7 @@ void *run(void *missile){
   Bombs *m = (Bombs*)missile;
   int rest = rand() % 1000;
   
-  usleep(rest * 1000);
+  usleep(rest * 100);
   pthread_mutex_lock(&thread);
   mvaddstr(m->currentx, m->currenty, "|");
   refresh();
@@ -258,7 +258,7 @@ void *run(void *missile){
     }
       //if it is just an empty space, keep going
     else{
-      usleep(rest * 1000);
+      usleep(rest * 100);
       pthread_mutex_lock(&thread);
       mvaddstr(m->currentx, m->currenty, " ");
       mvaddstr(m->currentx + 1, m->currenty, "|");
@@ -267,7 +267,7 @@ void *run(void *missile){
       pthread_mutex_unlock(&thread);
       m->currentx++;
     }
-    usleep(rest * 1000);
+    usleep(rest * 100);
   }
   destroy_missile(m);
   return (void*) "Over";
